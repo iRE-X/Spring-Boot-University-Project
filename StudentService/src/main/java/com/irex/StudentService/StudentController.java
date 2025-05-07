@@ -29,10 +29,10 @@ public class StudentController {
     private CourseService courseService;
 
     @GetMapping
-    public ResponseEntity<List<StudentDTO>> getStudents(@RequestParam(required = false) String studentName) {
+    public ResponseEntity<List<StudentDTO>> getStudents(@RequestParam(required = false) String name) {
         List<Student> res = null;
 
-        if(studentName != null) res = service.findByName(studentName);
+        if(name != null) res = service.findByName(name);
         else res = service.findAll();
 
         if(res == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -59,18 +59,18 @@ public class StudentController {
     }
 
     @PostMapping
-    public ResponseEntity<StudentDTO> create(@RequestBody StudentDTO studentDTO) {
-        String studentName = studentDTO.name();
-        Long rollNo = studentDTO.rollNo();
-        String departmentName = studentDTO.departmentName();
+    public ResponseEntity<StudentDTO> create(@RequestBody Student student) {
+        String studentName = student.getName();
+        Long rollNo = student.getRollNo();
+        Long departmentId = student.getDepartmentId();
 
-        Department department = departmentService.findDepartmentByName(departmentName);
+        Department department = departmentService.findDepartmentById(departmentId);
         if(department == null || rollNo == null || studentName == null) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
-        List<String> courseList = studentDTO.courses();
-        List<Long> courseIds = courseList == null ? new ArrayList<>() : getCourseIds(department.id(), courseList);
+        List<Long> courseIds = student.getCourseIds();
+        courseIds = courseIds == null ? new ArrayList<>() : filterCourseIds(department.id(), courseIds);
 
-        Student student = Student.builder().name(studentName).rollNo(rollNo).departmentId(department.id()).courseIds(courseIds).build();
+        student = Student.builder().name(studentName).rollNo(rollNo).departmentId(department.id()).courseIds(courseIds).build();
         Student s = service.create(student);
 
         if(s == null) return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
@@ -78,14 +78,16 @@ public class StudentController {
     }
 
     @PatchMapping(value = "/enroll")
-    public ResponseEntity<StudentDTO> enrollToCourse(@RequestBody StudentDTO studentDTO) {
-        Long rollNo = studentDTO.rollNo();
-        List<String> courseList = studentDTO.courses();
+    public ResponseEntity<StudentDTO> enrollToCourse(@RequestBody Student student) {
+        Long rollNo = student.getRollNo();
+        List<Long> courseIds = student.getCourseIds();
+
+        if(rollNo == null) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         Student s = service.findByRollNo(rollNo);
         if(s == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
-        List<Long> courseIds = getCourseIds(s.getDepartmentId(), courseList);
+        courseIds = filterCourseIds(s.getDepartmentId(), courseIds);
         s.getCourseIds().addAll(courseIds);
         s = service.save(s);
 
@@ -94,8 +96,8 @@ public class StudentController {
         return ResponseEntity.ok(generateDTO(s));
     }
 
-    private List<Long> getCourseIds(Long departmentId, List<String> courseList) {
-        return courseService.getCoursesByNames(courseList).stream().filter(c -> Objects.equals(c.departmentId(), departmentId)).map(Course::id).toList();
+    private List<Long> filterCourseIds(Long departmentId, List<Long> courseIds) {
+        return courseService.getCoursesByIds(courseIds).stream().filter(c -> Objects.equals(c.departmentId(), departmentId)).map(Course::id).toList();
     }
 
     private List<StudentDTO> batchGenerateDTO(List<Student> students) {
@@ -107,7 +109,7 @@ public class StudentController {
     private StudentDTO generateDTO(Student s) {
         if(s == null) return null;
         Department d = departmentService.findDepartmentById(s.getDepartmentId());
-        List<String> courses = courseService.getCoursesByIds(s.getCourseIds()).stream().map(Course::name).toList();
-        return new StudentDTO(s.getName(),s.getRollNo(), d.name(), courses);
+        List<Course> courses = courseService.getCoursesByIds(s.getCourseIds()).stream().toList();
+        return new StudentDTO(s.getId(), s.getName(),s.getRollNo(), d, courses);
     }
 }

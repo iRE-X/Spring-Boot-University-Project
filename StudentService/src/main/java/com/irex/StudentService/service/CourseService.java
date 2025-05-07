@@ -54,7 +54,7 @@ public class CourseService {
 
     private List<Course> getCourses() {
         try {
-            String url = "http://localhost:8002/api/courses";
+            String url = "http://localhost:8002/api/courses/raw";
             ParameterizedTypeReference<List<Course>> responseType = new ParameterizedTypeReference<>() {};
             return restTemplate.exchange(url, HttpMethod.GET, null, responseType).getBody();
         } catch (RestClientException e) {

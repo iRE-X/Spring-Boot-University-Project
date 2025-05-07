@@ -80,8 +80,8 @@ public class DepartmentController {
 
     private DepartmentDTO generateDTO(Department d) {
         if(d == null) return null;
-        List<String> courses = courseService.getCoursesByDepartment(d.getId()).stream().map(Course::name).toList();
+        List<Course> courses = courseService.getCoursesByDepartment(d.getId()).stream().toList();
         List<Student> students = studentService.getStudentsByDepartment(d.getId());
-        return new DepartmentDTO(d.getName(), courses, students);
+        return new DepartmentDTO(d.getId(), d.getName(), courses, students);
     }
 }

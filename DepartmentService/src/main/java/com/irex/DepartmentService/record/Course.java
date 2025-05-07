@@ -1,4 +1,4 @@
 package com.irex.DepartmentService.record;
 
-public record Course(String name, Long departmentId) {
+public record Course(Long id, String name) {
 }

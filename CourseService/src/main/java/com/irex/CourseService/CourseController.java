@@ -23,19 +23,19 @@ public class CourseController {
     private DepartmentService departmentService;
 
     @GetMapping
-    public ResponseEntity<List<Course>> getCourses(@RequestParam(required = false) String departmentName) {
+    public ResponseEntity<List<CourseDTO>> getCourses(@RequestParam(required = false) String departmentName) {
         List<Course> res = null;
 
         if(departmentName != null) {
             Department dept = departmentService.findDepartmentByName(departmentName);
-            if(dept == null) return null;
+            if(dept == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             res = service.findByDepartmentId(dept.id());
         } else {
             res = service.findAll();
         }
 
         if(res == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(batchGenerateDTO(res));
     }
 
     @GetMapping(value = "/raw")
@@ -57,18 +57,18 @@ public class CourseController {
     }
 
     @PostMapping
-    public ResponseEntity<Course> create(@RequestBody CourseDTO courseDTO) {
-        String courseName = courseDTO.name();
-        String departmentName = courseDTO.departmentName();
+    public ResponseEntity<CourseDTO> create(@RequestBody Course course) {
+        String courseName = course.getName();
+        Long departmentId = course.getDepartmentId();
 
-        Department department = departmentService.findDepartmentByName(departmentName);
+        Department department = departmentService.findDepartmentById(departmentId);
         if(department == null) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
-        Course course = Course.builder().name(courseName).departmentId(department.id()).build();
+        course = Course.builder().name(courseName).departmentId(department.id()).build();
         Course c = service.create(course);
 
         if(c == null) return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
-        return new ResponseEntity<>(c, HttpStatus.CREATED);
+        return new ResponseEntity<>(generateDTO(c), HttpStatus.CREATED);
     }
 
     @PostMapping(value = "/by-ids")
@@ -94,6 +94,6 @@ public class CourseController {
     private CourseDTO generateDTO(Course c) {
         if(c == null) return null;
         Department d = departmentService.findDepartmentById(c.getDepartmentId());
-        return new CourseDTO(c.getName(), d.name());
+        return new CourseDTO(c.getId(), c.getName(), d);
     }
 }
