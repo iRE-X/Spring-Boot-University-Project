@@ -33,6 +33,10 @@ public class StudentService {
         return repository.findByDepartmentId(deptId);
     }
 
+    public List<Student> findByCourseId(Long courseId) {
+        return repository.findByCourseId(courseId);
+    }
+
     public List<Student> findAll() {
         return repository.findAll();
     }

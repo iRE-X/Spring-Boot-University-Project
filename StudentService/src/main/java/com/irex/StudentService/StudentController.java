@@ -40,10 +40,11 @@ public class StudentController {
     }
 
     @GetMapping(value = "/raw")
-    public ResponseEntity<List<Student>> getAllStudents(@RequestParam(required = false) Long departmentId) {
+    public ResponseEntity<List<Student>> getAllStudents(@RequestParam(required = false) Long departmentId, @RequestParam(required = false) Long courseId) {
         List<Student> res = null;
 
         if (departmentId != null) res = service.findByDepartmentId(departmentId);
+        else if (courseId != null) res = service.findByCourseId(courseId);
         else res = service.findAll();
 
         if(res == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);

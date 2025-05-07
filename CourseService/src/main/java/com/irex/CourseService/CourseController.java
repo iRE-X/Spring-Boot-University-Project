@@ -3,8 +3,10 @@ package com.irex.CourseService;
 import com.irex.CourseService.entity.Course;
 import com.irex.CourseService.record.CourseDTO;
 import com.irex.CourseService.record.Department;
+import com.irex.CourseService.record.Student;
 import com.irex.CourseService.service.CourseService;
 import com.irex.CourseService.service.DepartmentService;
+import com.irex.CourseService.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,9 @@ public class CourseController {
 
     @Autowired
     private DepartmentService departmentService;
+
+    @Autowired
+    private StudentService studentService;
 
     @GetMapping
     public ResponseEntity<List<CourseDTO>> getCourses(@RequestParam(required = false) String departmentName) {
@@ -94,6 +99,7 @@ public class CourseController {
     private CourseDTO generateDTO(Course c) {
         if(c == null) return null;
         Department d = departmentService.findDepartmentById(c.getDepartmentId());
-        return new CourseDTO(c.getId(), c.getName(), d);
+        List<Student> students = studentService.getStudentsByCourseId(c.getId());
+        return new CourseDTO(c.getId(), c.getName(), d, students);
     }
 }
